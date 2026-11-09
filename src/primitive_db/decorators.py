@@ -1,5 +1,5 @@
 from functools import wraps
-from time import perf_counter
+from time import monotonic
 
 
 def handle_db_errors(func):
@@ -19,27 +19,36 @@ def log_time(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        start_time = perf_counter()
+        start_time = monotonic()
+
         try:
             return func(*args, **kwargs)
         finally:
-            elapsed = perf_counter() - start_time
-            print(f"Время выполнения: {elapsed:.4f} сек.")
+            elapsed = monotonic() - start_time
+            print(
+                f"Функция {func.__name__} "
+                f"выполнилась за {elapsed:.3f} секунд"
+            )
 
     return wrapper
 
 
-def confirm_action(func):
-    """Запрашивает подтверждение перед выполнением действия."""
+def confirm_action(action_name):
+    """Создаёт декоратор для подтверждения действия."""
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        answer = input("Вы уверены? [y/n]: ").strip().lower()
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            answer = input(
+                f'Вы уверены, что хотите выполнить "{action_name}"? [y/n]: '
+            ).strip().lower()
 
-        if answer != "y":
-            print("Действие отменено.")
-            return None
+            if answer != "y":
+                print("Действие отменено.")
+                return None
 
-        return func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator

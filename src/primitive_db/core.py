@@ -1,10 +1,9 @@
 from prettytable import PrettyTable
 
+from primitive_db.constants import VALID_TYPES
 from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 from primitive_db.parser import convert_value
 from primitive_db.utils import load_table_data, save_table_data
-
-VALID_TYPES = {"int", "str", "bool"}
 
 
 def create_table(metadata, table_name, columns):
@@ -47,7 +46,7 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
-@confirm_action
+@confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
     """Удаляет таблицу из метаданных."""
     if table_name not in metadata:
@@ -176,6 +175,7 @@ def update_record(metadata, table_name, column, new_value, condition):
     print(f"Обновлено записей: {updated_count}")
 
 
+@confirm_action("удаление записей")
 def delete_records(metadata, table_name, condition):
     """Удаляет записи из таблицы по условию."""
     if table_name not in metadata:
@@ -210,7 +210,7 @@ def delete_records(metadata, table_name, condition):
 
 
 def table_info(metadata, table_name):
-    """Показывает структуру таблицы."""
+    """Показывает структуру таблицы и количество записей."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
         return
@@ -219,3 +219,6 @@ def table_info(metadata, table_name):
 
     for column, data_type in metadata[table_name].items():
         print(f"- {column}: {data_type}")
+
+    records = load_table_data(table_name)
+    print(f"Количество записей: {len(records)}")

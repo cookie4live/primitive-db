@@ -1,10 +1,13 @@
+import shlex
+
+from primitive_db.constants import META_FILE
 from primitive_db.core import (
     create_table,
     delete_records,
     drop_table,
     insert_record,
     select_records,
-     table_info,
+    table_info,
     update_record,
 )
 from primitive_db.parser import parse_condition
@@ -13,28 +16,39 @@ from primitive_db.utils import load_metadata, save_metadata
 
 def print_help():
     """Выводит справку по командам."""
-    print("info <имя> — показать структуру таблицы")
     print("\n*** Справка по командам ***")
     print("help — показать справку")
     print("exit — выйти из программы")
     print("create_table <имя> <столбец:тип> ... — создать таблицу")
     print("drop_table <имя> — удалить таблицу")
     print("list_tables — показать список таблиц")
+    print("info <имя> — показать структуру таблицы")
+    print("insert into <таблица> values (...) — добавить запись")
+    print("select from <таблица> [where условие] — показать записи")
+    print("update <таблица> set <поле>=<значение> where <условие> — изменить запись")
+    print("delete from <таблица> where <условие> — удалить записи")
 
 
-def welcome():
+
+def run():
     """Запускает программу и обрабатывает команды."""
     print_help()
 
     while True:
-        metadata = load_metadata("db_meta.json")
+        metadata = load_metadata(META_FILE)
         user_input = input("\nВведите команду: ").strip()
-        args = user_input.split()
+
+        try:
+            args = shlex.split(user_input, posix=False)
+        except ValueError as error:
+            print(f"Ошибка ввода: {error}")
+            continue
 
         if not args:
             continue
 
         command = args[0]
+
 
         if command == "help":
             print_help()
@@ -50,7 +64,7 @@ def welcome():
 
             table_name = args[1]
             metadata = create_table(metadata, table_name, args[2:])
-            save_metadata("db_meta.json", metadata)
+            save_metadata(META_FILE, metadata)
 
         elif command == "insert":
             if len(args) < 5 or args[1] != "into" or args[3] != "values":
